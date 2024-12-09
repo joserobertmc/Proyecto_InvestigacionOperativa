@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investigación de Operaciones 1</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+
+        header {
+            background-color: #d4e63a;
+            color: rgb(2, 2, 2);
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .menu {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .menu button {
+            background-color: #62b865;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .menu button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        #input-container {
+            text-align: center;
+            margin: 20px;
+        }
+
+        #input-container textarea {
+            width: 70%;
+            height: 100px;
+            font-size: 16px;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+
+        #input-container button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        #input-container button:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 8px;
+        }
+
+        table th {
+            background-color: #4caf50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Investigación de Operaciones 1
+        <h1>Modelos de Distribución de Red</h1>
+        <h2>Optimizacion del Problema de Transporte</h2>
+    </header>
+    <div class="menu">
+        <button onclick="showInput('origen')">Introducir Nodos de Origen</button>
+        <button onclick="showInput('destino')">Introducir Nodos de Destino</button>
+        <button onclick="showInput('costos')">Introducir Costos</button>
+        <button onclick="showInput('oferta')">Introducir Oferta</button>
+        <button onclick="showInput('demanda')">Introducir Demanda</button>
+        <button onclick="calculate()">Ver Resultado</button>
+    </div>
+    <div id="input-container"></div>
+    <div id="result" class="result hidden"></div>
+
+    <script>
+        const data = {
+            origen: [],
+            destino: [],
+            costos: [],
+            oferta: [],
+            demanda: []
+        };
+
+        function showInput(type) {
+            const container = document.getElementById('input-container');
+            container.innerHTML = '';
+            const title = document.createElement('h3');
+            title.textContent = `Introducir ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            container.appendChild(title);
+
+            const input = document.createElement('textarea');
+            input.placeholder = `Introduce los valores separados por comas. Ejemplo: ${type === 'costos' ? '3,4,6,...' : '2000,1500,...'}`;
+            container.appendChild(input);
+
+            const button = document.createElement('button');
+            button.textContent = 'Guardar';
+            button.onclick = () => {
+                const values = input.value.split(',').map(v => parseInt(v.trim()));
+                data[type] = values;
+                alert(`${type.charAt(0).toUpperCase() + type.slice(1)} guardados correctamente.`);
+                container.innerHTML = '';
+            };
+            container.appendChild(button);
+        }
+
+        function calculate() {
+            const { origen, destino, costos, oferta, demanda } = data;
+            if (!origen.length || !destino.length || !costos.length || !oferta.length || !demanda.length) {
+                alert('Por favor, introduce todos los datos antes de calcular.');
+                return;
+            }
+
+            // Inicializar variables
+            const rows = oferta.length;
+            const cols = demanda.length;
+            const allocation = Array.from({ length: rows }, () => Array(cols).fill(0));
+            const costMatrix = [];
+            let totalCost = 0;
+
+            // Crear la matriz de costos
+            for (let i = 0; i < rows; i++) {
+                costMatrix.push(costos.slice(i * cols, (i + 1) * cols));
+            }
+
+            // Resolver usando el método de costos mínimos
+            let remainingSupply = [...oferta];
+            let remainingDemand = [...demanda];
+
+            while (remainingSupply.some(s => s > 0) && remainingDemand.some(d => d > 0)) {
+                let minCost = Infinity;
+                let minRow = -1;
+                let minCol = -1;
+
+                // Encontrar el costo mínimo
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        if (remainingSupply[i] > 0 && remainingDemand[j] > 0 && costMatrix[i][j] < minCost) {
+                            minCost = costMatrix[i][j];
+                            minRow = i;
+                            minCol = j;
+                        }
+                    }
+                }
+
+                // Asignar lo máximo posible al costo mínimo
+                const allocationValue = Math.min(remainingSupply[minRow], remainingDemand[minCol]);
+                allocation[minRow][minCol] = allocationValue;
+                totalCost += allocationValue * minCost;
+
+                // Actualizar las ofertas y demandas restantes
+                remainingSupply[minRow] -= allocationValue;
+                remainingDemand[minCol] -= allocationValue;
+            }
+
+            // Mostrar resultados
+            const result = document.getElementById('result');
+            result.classList.remove('hidden');
+            result.innerHTML = `<h3>Resultados:</h3>
+                <p><strong>Costo total mínimo:</strong> ${totalCost}</p>
+                <h4>Asignaciones:</h4>
+                <table border="1" cellpadding="5">
+                    <thead>
+                        <tr>
+                            <th>Origen/Destino</th>
+                            ${destino.map((_, i) => `<th>D${i + 1}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${allocation.map((row, i) => `
+                            <tr>
+                                <td>O${i + 1}</td>
+                                ${row.map(value => `<td>${value}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+    </script>
+</body>
+</html>
